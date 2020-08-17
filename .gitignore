@@ -71,3 +71,4 @@ atlassian*
 /clean
 /deploy
 /.github
+/app/etc/config.php
