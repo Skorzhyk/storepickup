@@ -1,0 +1,24 @@
+{
+    "name": "amasty/module-store-pickup-with-locator",
+    "description": "Store Pickup with Locator by Amasty",
+    "require": {
+        "php": "^7.1.0",
+        "amasty/module-store-locator": ">=2.4.3",
+        "amasty/module-store-locator-indexer": ">=1.0.0",
+        "amasty/base": ">=1.10.5",
+        "amasty/geoip": ">=1.5.3"
+    },
+    "type": "magento2-module",
+    "version": "2.3.7",
+    "license": [
+        "Commercial"
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Amasty\\StorePickupWithLocator\\": ""
+        }
+    }
+}

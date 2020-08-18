@@ -1,0 +1,7 @@
+<!--ko if: method.carrier_code === 'amstorepickup' && $parents[2].selectedShippingMethod() === 'amstorepickup_amstorepickup'-->
+<div class="ampickup-store-container -cart">
+    <!-- ko foreach: {data:elems(), as: 'element'} -->
+    <!-- ko template: getTemplate() --><!-- /ko -->
+    <!--/ko-->
+</div>
+<!-- /ko -->

@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author Amasty Team
+ * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
+ * @package Amasty_StorelocatorIndexer
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Amasty\StorelocatorIndexer\Model\Indexer\Location\LocationIndexer">
+        <arguments>
+            <argument name="indexBuilder" xsi:type="object">Amasty\StorelocatorIndexer\Model\Indexer\Location\IndexBuilder</argument>
+        </arguments>
+    </type>
+    <type name="Amasty\StorelocatorIndexer\Model\Indexer\Product\ProductLocatorIndexer">
+        <arguments>
+            <argument name="indexBuilder" xsi:type="object">Amasty\StorelocatorIndexer\Model\Indexer\Product\IndexBuilder</argument>
+        </arguments>
+    </type>
+    <type name="Amasty\Storelocator\Model\LocationProductValidator">
+        <plugin name="AmastyIndexerValidator" type="Amasty\StorelocatorIndexer\Plugin\Model\LocationProductValidatorPlugin"/>
+    </type>
+    <type name="Amasty\Storelocator\Model\ResourceModel\Location\Collection">
+        <plugin name="AmastyIndexerFilter" type="Amasty\StorelocatorIndexer\Plugin\Model\ResourceModel\Location\CollectionPlugin"/>
+    </type>
+</config>

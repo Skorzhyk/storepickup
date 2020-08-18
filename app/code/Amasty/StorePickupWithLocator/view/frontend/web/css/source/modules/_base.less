@@ -1,0 +1,222 @@
+//
+//  Amasty Store Pickup With Locator
+//  Base Styles
+//  ___________________________________________
+
+//
+//  Common
+//  -------------------------------------------
+
+& when (@media-common = true) {
+    .ampickup-store-container {
+        & {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        &.-cart {
+            padding: 0 5px;
+        }
+
+        .ampickup-field {
+            & {
+                width: 100%;
+            }
+
+            &:not(:last-of-type) {
+                margin-bottom: 10px;
+            }
+        }
+
+        .ampickup-field select,
+        .ampickup-field input {
+            padding: 5px 10px;
+            height: inherit;
+        }
+
+        .ampickup-field.-store .ampickup-wrapper {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .ampickup-field.-date .control {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .ampickup-field.-date input {
+            flex: 1 1 80%;
+        }
+
+        .ampickup-field.-date .ui-datepicker-trigger {
+            max-width: 50px;
+            flex: 1 1 20%;
+        }
+
+        .ampickup-separator {
+            align-self: stretch;
+            margin: 15px 0;
+            width: inherit;
+            border-top: 1px solid #c7c7c7;
+        }
+
+        .ampickup-choosemap {
+            & {
+                display: inline-block;
+                margin: 0 auto 0 0;
+                padding: 5px 15px;
+                border-radius: 4px;
+                background: #1979c3;
+                color: #fff;
+                white-space: nowrap;
+                cursor: pointer;
+            }
+
+            &:hover {
+                background: darken(#1973c3, 10%);
+            }
+        }
+
+        .label {
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+    }
+
+    .ampickup-details-container {
+        & {
+            margin-bottom: 15px;
+            flex: 1 1 100%;
+        }
+
+        .ampickup-title {
+            margin: 0 0 15px 0;
+        }
+
+        div:empty,
+        div:empty + br {
+            display: none;
+        }
+
+        // Override Amasty OSC shipping address details width for store details
+        .amcheckout-step-container .amcheckout-shipping-address &.shipping-address-details {
+            width: 100%;
+        }
+    }
+
+    .ampickup-map-popup {
+        & {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .ampickup-overlay {
+            position: absolute;
+            z-index: 1;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, .5);
+        }
+
+        .ampickup-title {
+            display: block;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .ampickup-content {
+            position: relative;
+            z-index: 2;
+            overflow: auto;
+            box-sizing: border-box;
+            padding: 25px;
+            width: 90vw;
+            max-height: 95vh;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        .ampickup-close {
+            & {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 25px;
+                height: 25px;
+                opacity: .3;
+                cursor: pointer;
+            }
+
+            &:hover {
+                opacity: 1;
+            }
+
+            &:before,
+            &:after {
+                position: absolute;
+                left: 11px;
+                width: 2px;
+                height: 27px;
+                background-color: #333;
+                content: ' ';
+            }
+
+            &:before {
+                transform: rotate(45deg);
+            }
+
+            &:after {
+                transform: rotate(-45deg);
+            }
+        }
+
+        .amlocator-block.-map {
+            box-sizing: border-box;
+        }
+    }
+}
+
+//
+//  Tablet
+//  -------------------------------------------
+
+.media-width(@extremum, @break) when (@extremum = 'min') and (@break = @screen__m) {
+    .ampickup-store-container.-checkout {
+        .ampickup-field {
+            box-sizing: border-box;
+        }
+
+        .ampickup-field.-time {
+            padding-left: 10px;
+            width: 50%;
+        }
+
+        .ampickup-field.-date {
+            padding-right: 10px;
+            width: 50%;
+        }
+
+        .ampickup-field.-store .ampickup-wrapper {
+            flex-direction: row;
+        }
+
+        .ampickup-separator {
+            margin: 0 25px;
+            border-top: 0;
+            border-right: 1px solid #c7c7c7;
+        }
+    }
+
+    .ampickup-map-popup .ampickup-content {
+        width: 80vw;
+    }
+}
