@@ -6,8 +6,14 @@
  * @package Amasty_StorePickupAddon
  */
 -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <type name="Magento\Quote\Model\QuoteManagement">
-        <plugin name="amasty-split-order" type="Amasty\StorePickupAddon\Plugin\SplitOrder"/>
+        <plugin name="amasty-split-order"
+                type="Amasty\StorePickupAddon\Plugin\Quote\Model\QuoteManagement\SplitOrder"/>
+    </type>
+    <type name="Magento\Shipping\Model\Shipping">
+        <plugin name="provide-appropriate-items-for-carrier"
+                type="Amasty\StorePickupAddon\Plugin\Shipping\Model\Shipping\ProvideItems"/>
     </type>
 </config>

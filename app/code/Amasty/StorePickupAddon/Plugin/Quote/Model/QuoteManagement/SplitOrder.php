@@ -6,7 +6,7 @@
  */
 declare(strict_types=1);
 
-namespace Amasty\StorePickupAddon\Plugin;
+namespace Amasty\StorePickupAddon\Plugin\Quote\Model\QuoteManagement;
 
 use Magento\Sales\Api\Data\OrderInterface;
 use Magento\Quote\Model\QuoteManagement;
@@ -18,6 +18,7 @@ use Amasty\StorePickupAddon\Model\QuoteProcessor;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Model\Quote;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class is responsible for creating orders based on items' store pickup value.
@@ -33,27 +34,31 @@ class SplitOrder
     /** @var ManagerInterface */
     private $eventManager;
 
-    /**
-     * @var QuoteProcessor
-     */
+    /** @var QuoteProcessor */
     private $quoteProcessor;
+
+    /** @var LoggerInterface */
+    private $logger;
 
     /**
      * @param CartRepositoryInterface $quoteRepository
      * @param QuoteFactory $quoteFactory
      * @param ManagerInterface $eventManager
      * @param QuoteProcessor $quoteProcessor
+     * @param LoggerInterface $logger
      */
     public function __construct(
         CartRepositoryInterface $quoteRepository,
         QuoteFactory $quoteFactory,
         ManagerInterface $eventManager,
-        QuoteProcessor $quoteProcessor
+        QuoteProcessor $quoteProcessor,
+        LoggerInterface $logger
     ) {
         $this->quoteRepository = $quoteRepository;
         $this->quoteFactory = $quoteFactory;
         $this->eventManager = $eventManager;
         $this->quoteProcessor = $quoteProcessor;
+        $this->logger = $logger;
     }
 
     /**
@@ -87,7 +92,7 @@ class SplitOrder
             );
 
             try {
-                $order = $this->placeOrder($currentQuote, $subject);
+                $order = $this->placeOrder($quote, $subject);
                 $orders[] = $order;
                 $orderIds[$order->getEntityId()] = $order->getIncrementId();
 
@@ -97,7 +102,7 @@ class SplitOrder
 
                 $this->quoteProcessor->updateSession($quote, $order, $orderIds);
             } catch (\Exception $e) {
-
+                $this->logger->error($e->getMessage());
             }
         }
 
@@ -109,17 +114,6 @@ class SplitOrder
         );
 
         return $currentQuote->getId();
-    }
-
-    /**
-     * Save quote.
-     *
-     * @param CartInterface $quote
-     * @return void
-     */
-    private function saveQuote($quote): void
-    {
-        $this->quoteRepository->save($quote);
     }
 
     /**
@@ -137,7 +131,7 @@ class SplitOrder
             ['quote' => $quote]
         );
 
-        $this->saveQuote($quote);
+        $this->quoteRepository->save($quote);
 
         /** @var Quote $quote */
         return $quoteManagement->submit($quote);
