@@ -15,6 +15,7 @@ use Magento\Quote\Api\Data\CartInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Amasty\StorePickupAddon\Model\Config\Source\Delivery;
 use Magento\Quote\Model\Quote\Item;
+use Magento\Framework\Exception\NoSuchEntityException;
 
 /**
  * Class is responsible for splitting quote based on items' store pickup value.
@@ -27,14 +28,25 @@ class QuoteProcessor
     /** @var CartRepositoryInterface */
     private $quoteRepository;
 
+    /** @var ShippingProvider  */
+    private $shippingProvider;
+
+    /** @var CartInterface */
+    private $originalQuote;
+
     /**
      * @param CheckoutSession $checkoutSession
      * @param CartRepositoryInterface $quoteRepository
+     * @param ShippingProvider $shippingProvider
      */
-    public function __construct(CheckoutSession $checkoutSession, CartRepositoryInterface $quoteRepository)
-    {
+    public function __construct(
+        CheckoutSession $checkoutSession,
+        CartRepositoryInterface $quoteRepository,
+        ShippingProvider $shippingProvider
+    ) {
         $this->checkoutSession = $checkoutSession;
         $this->quoteRepository = $quoteRepository;
+        $this->shippingProvider = $shippingProvider;
     }
 
     /**
@@ -45,9 +57,10 @@ class QuoteProcessor
      */
     public function splitQuotes(CartInterface $quote): array
     {
-        $groups = [];
+        $this->originalQuote = $quote;
 
-        foreach ($quote->getAllVisibleItems() as $item) {
+        $groups = [];
+        foreach ($this->originalQuote->getAllVisibleItems() as $item) {
             $isDeliverySpecified = false;
 
             $productOptions = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
@@ -73,27 +86,30 @@ class QuoteProcessor
      * Create separate quote for items' group.
      *
      * @param CartInterface $quote
-     * @param CartInterface $separateQuote
      * @param array $quoteItems
      * @param $paymentMethod
      * @return CartInterface
+     * @throws NoSuchEntityException
      */
     public function createSeparateQuote(
         CartInterface $quote,
-        CartInterface $separateQuote,
         array $quoteItems,
         $paymentMethod
     ): CartInterface {
-        $this->setAddresses($quote, $separateQuote);
-        $this->setCustomerData($quote, $separateQuote);
-        $this->setQuoteItems($quoteItems, $separateQuote);
+        $this
+            ->setAddresses($quote)
+            ->setCustomerData($quote)
+            ->setQuoteItems($quoteItems, $quote);
 
-        $this->quoteRepository->save($separateQuote);
+        $this->quoteRepository->save($quote);
 
-        $this->collectTotals($separateQuote, $quoteItems);
-        $this->setPaymentMethod($quote, $separateQuote, $paymentMethod);
+        $quote = $this->setShippingInformation($quote);
 
-        return $separateQuote;
+        $this
+            ->collectTotals($quote, $quoteItems)
+            ->setPaymentMethod($quote, $paymentMethod);
+
+        return $quote;
     }
 
     /**
@@ -137,46 +153,23 @@ class QuoteProcessor
     }
 
     /**
-     * Set quote items.
-     *
-     * @param array $items
-     * @param CartInterface $separateQuote
-     * @return QuoteProcessor
-     */
-    private function setQuoteItems(array $items, CartInterface $separateQuote): QuoteProcessor
-    {
-        foreach ($items as $item) {
-            $item->setId(null);
-            if ($item->getHasChildren()) {
-                foreach ($item->getChildren() as $child) {
-                    $child->setId(null);
-                }
-            }
-            $separateQuote->addItem($item);
-        }
-
-        return $this;
-    }
-
-    /**
      * Set addresses from original quote to the separated.
      *
      * @param CartInterface $quote
-     * @param CartInterface $separateQuote
      * @return QuoteProcessor
      */
-    private function setAddresses(CartInterface $quote, CartInterface $separateQuote): QuoteProcessor
+    private function setAddresses(CartInterface $quote): QuoteProcessor
     {
-        $shippingAddressData = $quote->getShippingAddress()->getData();
+        $shippingAddressData = $this->originalQuote->getShippingAddress()->getData();
         unset($shippingAddressData['id']);
         unset($shippingAddressData['quote_id']);
 
-        $billingAddressData = $quote->getBillingAddress()->getData();
+        $billingAddressData = $this->originalQuote->getBillingAddress()->getData();
         unset($billingAddressData['id']);
         unset($billingAddressData['quote_id']);
 
-        $separateQuote->getShippingAddress()->setData($shippingAddressData);
-        $separateQuote->getBillingAddress()->setData($billingAddressData);
+        $quote->getShippingAddress()->setData($shippingAddressData);
+        $quote->getBillingAddress()->setData($billingAddressData);
 
         return $this;
     }
@@ -185,23 +178,61 @@ class QuoteProcessor
      * Pass customer data to the separate quote.
      *
      * @param CartInterface $quote
-     * @param CartInterface $separateQuote
      * @return QuoteProcessor
      */
-    private function setCustomerData(CartInterface $quote, CartInterface $separateQuote): QuoteProcessor
+    private function setCustomerData(CartInterface $quote): QuoteProcessor
     {
-        $separateQuote->setStoreId($quote->getStoreId());
-        $separateQuote->setCustomer($quote->getCustomer());
-        $separateQuote->setCustomerIsGuest($quote->getCustomerIsGuest());
+        $quote->setStoreId($this->originalQuote->getStoreId());
+        $quote->setCustomer($this->originalQuote->getCustomer());
+        $quote->setCustomerIsGuest($this->originalQuote->getCustomerIsGuest());
 
-        if ($quote->getCheckoutMethod() === CartManagementInterface::METHOD_GUEST) {
-            $separateQuote->unsetData('customer_id');
-            $separateQuote->setCustomerEmail($quote->getBillingAddress()->getEmail());
-            $separateQuote->setCustomerIsGuest(true);
-            $separateQuote->setCustomerGroupId(GroupInterface::NOT_LOGGED_IN_ID);
+        if ($this->originalQuote->getCheckoutMethod() === CartManagementInterface::METHOD_GUEST) {
+            $quote->unsetData('customer_id');
+            $quote->setCustomerEmail($this->originalQuote->getBillingAddress()->getEmail());
+            $quote->setCustomerIsGuest(true);
+            $quote->setCustomerGroupId(GroupInterface::NOT_LOGGED_IN_ID);
         }
 
         return $this;
+    }
+
+    /**
+     * Set quote items.
+     *
+     * @param array $items
+     * @param CartInterface $quote
+     * @return QuoteProcessor
+     */
+    private function setQuoteItems(array $items, CartInterface $quote): QuoteProcessor
+    {
+        foreach ($items as $item) {
+            $item->setId(null);
+            if ($item->getHasChildren()) {
+                foreach ($item->getChildren() as $child) {
+                    $child->setId(null);
+                }
+            }
+            $quote->addItem($item);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set separate quote shipping information.
+     *
+     * @param CartInterface $quote
+     * @return CartInterface
+     * @throws NoSuchEntityException
+     */
+    private function setShippingInformation(CartInterface $quote): CartInterface
+    {
+        $delivery = $this->getQuoteDelivery($quote);
+        if ($delivery != Delivery::SHIPPING) {
+            $quote = $this->shippingProvider->collectPickupInformation($quote, $delivery);
+        }
+
+        return $quote;
     }
 
     /**
@@ -217,23 +248,23 @@ class QuoteProcessor
         $discount = 0.0;
         $finalPrice = 0.0;
 
+        /** @var Item $item $item */
         foreach ($items as $item) {
-            $tax += $item->getData('tax_amount');
-            $discount += $item->getData('discount_amount');
-
-            $finalPrice += ($item->getPrice() * $item->getQty());
+            $tax += $item->getTaxAmount();
+            $discount += $item->getDiscountAmount();
+            $finalPrice += $item->getRowTotal();
         }
 
-        $shipping = $this->shippingAmount($quote);
+        $shippingAmount = $quote->getShippingAddress()->getShippingAmount();
 
         foreach ($quote->getAllAddresses() as $address) {
-            $grandTotal = (($finalPrice + $shipping + $tax) - $discount);
+            $grandTotal = ($finalPrice + $tax - $discount) + $shippingAmount;
 
             $address->setBaseSubtotal($finalPrice);
             $address->setSubtotal($finalPrice);
             $address->setDiscountAmount($discount);
-            $address->setTaxAmount($tax);
             $address->setBaseTaxAmount($tax);
+            $address->setTaxAmount($tax);
             $address->setBaseGrandTotal($grandTotal);
             $address->setGrandTotal($grandTotal);
         }
@@ -241,31 +272,37 @@ class QuoteProcessor
         return $this;
     }
 
-    private function shippingAmount($quote)
+    /**
+     * Set separate quote payment method.
+     *
+     * @param CartInterface $quote
+     * @param $paymentMethod
+     * @return QuoteProcessor
+     */
+    private function setPaymentMethod(CartInterface $quote, $paymentMethod): QuoteProcessor
     {
-        $total = 0.0;
-
-        if ($quote->hasVirtualItems() === true) {
-            return $total;
-        }
-        $shippingTotal = $quote->getShippingAddress()->getShippingAmount();
-
-        $total = $shippingTotal;
-
-        return $total;
-    }
-
-    private function setPaymentMethod(
-        CartInterface $quote,
-        CartInterface $separateQuote,
-        $paymentMethod
-    ): QuoteProcessor {
-        $separateQuote->getPayment()->setMethod($quote->getPayment()->getMethod());
+        $quote->getPayment()->setMethod($this->originalQuote->getPayment()->getMethod());
 
         if ($paymentMethod) {
-            $separateQuote->getPayment()->setQuote($separateQuote);
-            $separateQuote->getPayment()->importData($paymentMethod->getData());
+            $quote->getPayment()->setQuote($quote);
+            $quote->getPayment()->importData($paymentMethod->getData());
         }
+
         return $this;
+    }
+
+    /**
+     * Get quote delivery type.
+     *
+     * @param CartInterface $quote
+     * @return int
+     */
+    private function getQuoteDelivery(CartInterface $quote): int
+    {
+        foreach ($quote->getAllVisibleItems() as $item) {
+            return $this->getItemDelivery($item);
+        }
+
+        return Delivery::SHIPPING;
     }
 }

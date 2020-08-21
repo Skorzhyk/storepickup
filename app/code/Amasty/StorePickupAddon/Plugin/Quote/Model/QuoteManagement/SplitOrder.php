@@ -85,7 +85,6 @@ class SplitOrder
         $orderIds = [];
         foreach ($itemGroups as $quoteItems) {
             $quote = $this->quoteProcessor->createSeparateQuote(
-                $currentQuote,
                 $this->quoteFactory->create(),
                 $quoteItems,
                 $paymentMethod
