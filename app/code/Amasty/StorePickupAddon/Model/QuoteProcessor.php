@@ -244,28 +244,42 @@ class QuoteProcessor
      */
     private function collectTotals(CartInterface $quote, array $items): QuoteProcessor
     {
+        $baseTax = 0.0;
         $tax = 0.0;
+        $baseDiscount = 0.0;
         $discount = 0.0;
-        $finalPrice = 0.0;
+        $baseSubtotal = 0.0;
+        $subtotal = 0.0;
 
         /** @var Item $item $item */
         foreach ($items as $item) {
+            $baseTax += $item->getBaseTaxAmount();
             $tax += $item->getTaxAmount();
+
+            $baseDiscount += $item->getBaseDiscountAmount();
             $discount += $item->getDiscountAmount();
-            $finalPrice += $item->getRowTotal();
+
+            $baseSubtotal += $item->getBaseRowTotal();
+            $subtotal += $item->getRowTotal();
         }
 
+        $baseShippingAmount = $quote->getShippingAddress()->getBaseShippingAmount();
         $shippingAmount = $quote->getShippingAddress()->getShippingAmount();
 
         foreach ($quote->getAllAddresses() as $address) {
-            $grandTotal = ($finalPrice + $tax - $discount) + $shippingAmount;
+            $baseGrandTotal = ($baseSubtotal + $baseTax - $baseDiscount) + $baseShippingAmount;
+            $grandTotal = ($subtotal + $tax - $discount) + $shippingAmount;
 
-            $address->setBaseSubtotal($finalPrice);
-            $address->setSubtotal($finalPrice);
+            $address->setBaseSubtotal($baseSubtotal);
+            $address->setSubtotal($subtotal);
+
+            $address->setBaseDiscountAmount($baseDiscount);
             $address->setDiscountAmount($discount);
-            $address->setBaseTaxAmount($tax);
+
+            $address->setBaseTaxAmount($baseTax);
             $address->setTaxAmount($tax);
-            $address->setBaseGrandTotal($grandTotal);
+
+            $address->setBaseGrandTotal($baseGrandTotal);
             $address->setGrandTotal($grandTotal);
         }
 
