@@ -1,13 +1,11 @@
 define(
     [
         'jquery',
-        'Magento_Checkout/js/model/quote',
-        'Magento_Checkout/js/action/select-shipping-method'
+        'Magento_Checkout/js/model/quote'
     ],
     function (
         $,
-        quote,
-        selectShippingMethodAction
+        quote
     ) {
         'use strict';
 
@@ -40,18 +38,6 @@ define(
                 });
 
                 return pickupStore;
-            },
-
-            selectPickupMethod: function (rates) {
-                var pickupStore = this.getFirstSelectedStore();
-
-                if (pickupStore) {
-                    rates.forEach(function (rate) {
-                        if (rate['method_code'] === 'amstorepickup') {
-                            selectShippingMethodAction(rate);
-                        }
-                    });
-                }
             }
         }
     }

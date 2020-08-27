@@ -14,7 +14,7 @@ use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Eav\Setup\EavSetupFactory;
 use Magento\Catalog\Model\Product;
 
-class AddDeliveryTypeAttributeToProduct implements DataPatchInterface
+class AddDeliveryAttributeToProduct implements DataPatchInterface
 {
     /** @var ModuleDataSetupInterface */
     private $moduleDataSetup;
@@ -41,10 +41,10 @@ class AddDeliveryTypeAttributeToProduct implements DataPatchInterface
         $eavSetup = $this->eavSetupFactory->create(['setup' => $this->moduleDataSetup]);
         $eavSetup->addAttribute(
             Product::ENTITY,
-            'delivery_type',
+            'delivery',
             [
                 'type' => 'text',
-                'label' => 'Delivery Type',
+                'label' => 'Delivery',
                 'input' => 'multiselect',
                 'backend' => 'Magento\Eav\Model\Entity\Attribute\Backend\ArrayBackend',
                 'source' => 'Amasty\StorePickupAddon\Model\Config\Source\Delivery',

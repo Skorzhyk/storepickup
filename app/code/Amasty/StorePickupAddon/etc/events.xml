@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author Amasty Team
+ * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
+ * @package Amasty_StorePickupAddon
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- for move date information from quote to order -->
+    <event name="controller_action_predispatch_checkout_index_index">
+        <observer name="collect-pickup-shipping-on-checkout"
+                  instance="Amasty\StorePickupAddon\Observer\CollectPickupShipping"/>
+    </event>
+</config>

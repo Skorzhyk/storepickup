@@ -17,6 +17,11 @@ use Magento\Quote\Api\Data\CartExtensionFactory;
 use Magento\Quote\Model\ShippingAssignmentFactory;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Amasty\Storelocator\Model\LocationFactory;
+use Amasty\Storelocator\Model\ResourceModel\Location as LocationResource;
+use Magento\Quote\Model\Quote\AddressFactory;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Quote\Model\Quote\Address;
 
 /**
  * Class is responsible for collecting shipping address information based on quote delivery type.
@@ -24,6 +29,8 @@ use Magento\Framework\Exception\NoSuchEntityException;
 class ShippingProvider
 {
     private const PICKUP_STORE = 'am_pickup_store';
+
+    private const COUNTRY_CODE_PATH = 'general/country/default';
 
     /** @var ShippingInformationManagementInterface */
     private $shippingInformationManagement;
@@ -43,13 +50,26 @@ class ShippingProvider
     /** @var CartRepositoryInterface */
     private $quoteRepository;
 
+    private $locationFactory;
+
+    private $locationResource;
+
+    private $addressFactory;
+
+    private $storeManager;
+
     public function __construct(
         ShippingInformationManagementInterface $shippingInformationManagement,
         ShippingInformationInterfaceFactory $shippingInformationFactory,
         ShippingInformationExtensionFactory $shippingInformationExtensionFactory,
         CartExtensionFactory $cartExtensionFactory,
         ShippingAssignmentFactory $shippingAssignmentFactory,
-        CartRepositoryInterface $quoteRepository
+        CartRepositoryInterface $quoteRepository,
+        LocationFactory $locationFactory,
+        LocationResource $locationResource,
+        AddressFactory $addressFactory,
+        StoreManagerInterface $storeManager
+
     ) {
         $this->shippingInformationManagement = $shippingInformationManagement;
         $this->shippingInformationFactory = $shippingInformationFactory;
@@ -57,6 +77,10 @@ class ShippingProvider
         $this->cartExtensionFactory = $cartExtensionFactory;
         $this->shippingAssignmentFactory = $shippingAssignmentFactory;
         $this->quoteRepository = $quoteRepository;
+        $this->locationFactory = $locationFactory;
+        $this->locationResource = $locationResource;
+        $this->addressFactory = $addressFactory;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -67,29 +91,80 @@ class ShippingProvider
      * @return CartInterface
      * @throws NoSuchEntityException
      */
-    public function collectPickupInformation(CartInterface $quote, int $deliveryLocation): CartInterface
-    {
+    public function collectPickupInformation(
+        CartInterface $quote,
+        int $deliveryLocation = null
+    ): CartInterface {
         $cartExtension = $quote->getExtensionAttributes();
         if ($cartExtension === null) {
             $cartExtension = $this->cartExtensionFactory->create();
         }
-        $shippingAssignment = $this->shippingAssignmentFactory->create();
+
+        $shippingAssignments = $cartExtension->getShippingAssignments();
+        if (empty($shippingAssignments)) {
+            $shippingAssignment = $this->shippingAssignmentFactory->create();
+        } else {
+            $shippingAssignment = $shippingAssignments[0];
+        }
         $shippingAssignment->setItems($quote->getAllVisibleItems());
         $cartExtension->setShippingAssignments([$shippingAssignment]);
 
-        $shippingInformationExtension = $this->shippingInformationExtensionFactory->create();
-        $shippingInformationExtension->setData(self::PICKUP_STORE, $deliveryLocation);
-
         $shippingInformation = $this->shippingInformationFactory->create();
-        $shippingInformation
-            ->setShippingAddress($quote->getShippingAddress())
-            ->setBillingAddress($quote->getBillingAddress())
-            ->setShippingCarrierCode(Shipping::SHIPPING_METHOD_CODE)
-            ->setShippingMethodCode(Shipping::SHIPPING_METHOD_CODE)
-            ->setExtensionAttributes($shippingInformationExtension);
+        if ($deliveryLocation !== null) {
+            $shippingInformationExtension = $this->shippingInformationExtensionFactory->create();
+            $shippingInformationExtension->setData(self::PICKUP_STORE, $deliveryLocation);
 
-        $this->shippingInformationManagement->saveAddressInformation($quote->getId(), $shippingInformation);
+            $this->setShippingAddress($quote, $deliveryLocation);
+            $shippingInformation
+                ->setShippingAddress($quote->getShippingAddress())
+                ->setBillingAddress($quote->getBillingAddress())
+                ->setShippingCarrierCode(Shipping::SHIPPING_METHOD_CODE)
+                ->setShippingMethodCode(Shipping::SHIPPING_METHOD_CODE)
+                ->setExtensionAttributes($shippingInformationExtension);
 
-        return $this->quoteRepository->getActive($quote->getId());
+            $this->shippingInformationManagement->saveAddressInformation($quote->getId(), $shippingInformation);
+
+            return $this->quoteRepository->getActive($quote->getId());
+        } else {
+            $this->refreshShippingAddress($quote->getShippingAddress());
+            $this->quoteRepository->save($quote);
+
+            return $quote;
+        }
+    }
+
+    private function setShippingAddress(CartInterface $quote, int $deliveryLocation): CartInterface
+    {
+        $location = $this->locationFactory->create();
+        $this->locationResource->load($location, $deliveryLocation);
+
+        $quote->getShippingAddress()
+            ->setFirstname('-')
+            ->setLastname('-')
+            ->setCountryId($location->getCountry())
+            ->setRegion($location->getStateName())
+            ->setRegionId($location->getState())
+            ->setStreet($location->getAddress())
+            ->setCity($location->getCity())
+            ->setPostcode($location->getZip())
+            ->setTelephone($location->getPhone());
+
+        return $quote;
+    }
+
+    private function refreshShippingAddress(Address $address): CartInterface
+    {
+        $address
+            ->setFirstname(null)
+            ->setLastname(null)
+            ->setRegion(null)
+            ->setRegionId(null)
+            ->setStreet(null)
+            ->setCity(null)
+            ->setPostcode(null)
+            ->setTelephone(null)
+            ->unsetData('shipping_method');
+
+        return $address;
     }
 }

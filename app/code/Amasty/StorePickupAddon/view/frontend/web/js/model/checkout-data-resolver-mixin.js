@@ -10,7 +10,7 @@ define(
         'Magento_Checkout/js/action/select-payment-method',
         'Magento_Checkout/js/action/select-shipping-address',
         'Amasty_Checkout/js/model/payment/vault-payment-resolver',
-        'Amasty_StorePickupAddon/js/model/store-pickup-processor',
+        'Amasty_StorePickupAddon/js/model/store-pickup-service',
         'uiRegistry',
         'underscore',
         'mage/utils/wrapper'
@@ -26,7 +26,7 @@ define(
         selectPaymentMethodAction,
         selectShippingAddress,
         vaultResolver,
-        storePickupProcessor,
+        storePickupService,
         registry,
         _,
         wrapper
@@ -79,9 +79,21 @@ define(
                     }
 
                     var selectedShippingRate = checkoutData.getSelectedShippingRate(),
+                        selectedShippingMethod = window.checkoutConfig.selectedShippingMethod,
                         availableRate = false;
 
-                    if (quote.shippingMethod()) {
+                    if (storePickupService.onlyPickup()) {
+                        registry
+                            .get('checkoutProvider')
+                            .set('amstorepickup', {am_pickup_store: storePickupService.getFirstSelectedStore()});
+
+                        availableRate = _.find(ratesData, function (rate) {
+                            return rate['carrier_code'] === selectedShippingMethod['carrier_code'] &&
+                                rate['method_code'] === selectedShippingMethod['method_code'];
+                        });
+                    }
+
+                    if (!availableRate && quote.shippingMethod()) {
                         availableRate = _.find(ratesData, function (rate) {
                             return rate['carrier_code'] == quote.shippingMethod()['carrier_code'] && //eslint-disable-line
                                 rate['method_code'] == quote.shippingMethod()['method_code']; //eslint-disable-line eqeqeq
@@ -94,9 +106,9 @@ define(
                         });
                     }
 
-                    if (!availableRate && window.checkoutConfig.selectedShippingMethod) {
+                    if (!availableRate && selectedShippingMethod) {
                         availableRate = _.find(ratesData, function (rate) {
-                            return rate['carrier_code'] + '_' + rate['method_code'] === window.checkoutConfig.selectedShippingMethod;
+                            return rate['carrier_code'] + '_' + rate['method_code'] === selectedShippingMethod;
                         });
                     }
 
@@ -106,8 +118,17 @@ define(
                         });
                     }
 
+                    if (selectedShippingMethod && selectedShippingMethod['carrier_code'] === 'amstorepickup') {
+                        checkoutData.setShippingAddressFromData(window.checkoutConfig['shippingAddressFromData']);
+                        // var checkoutCache = JSON.parse(window.localStorage.getItem('mage-cache-storage'));
+                        // checkoutCache['checkout-data']['shippingAddressFromData'] = window.checkoutConfig['shippingAddressFromData'];
+                        // window.localStorage.setItem('mage-cache-storage', JSON.stringify(checkoutCache));
+                    }
+
                     if (availableRate) {
-                        selectShippingMethodAction(availableRate);
+                        if (!(!storePickupService.onlyPickup() && availableRate['carrier_code'] === 'amstorepickup')) {
+                            selectShippingMethodAction(availableRate);
+                        }
                     } else {
                         selectShippingMethodAction(null);
                     }
