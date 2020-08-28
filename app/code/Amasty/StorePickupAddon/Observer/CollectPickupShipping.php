@@ -63,8 +63,6 @@ class CollectPickupShipping implements ObserverInterface
         try {
             $quote = $this->checkoutSession->getQuote();
 
-            $shippingAddress = $quote->getShippingAddress();
-
             $isShipping = false;
             foreach ($quote->getAllVisibleItems() as $item) {
                 $delivery = $this->quoteProcessor->getItemDelivery($item);
@@ -85,10 +83,5 @@ class CollectPickupShipping implements ObserverInterface
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
         }
-    }
-
-    private function isAddressRefreshed(Address $address): bool
-    {
-        return $address->get
     }
 }

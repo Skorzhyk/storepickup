@@ -16,4 +16,8 @@
         <plugin name="provide-appropriate-items-for-carrier"
                 type="Amasty\StorePickupAddon\Plugin\Shipping\Model\Shipping\ProvideItems"/>
     </type>
+    <type name="Magento\Quote\Model\Quote">
+        <plugin name="set-delivery-option-to-product"
+                type="Amasty\StorePickupAddon\Plugin\Quote\Model\Quote\SetDeliveryOption"/>
+    </type>
 </config>

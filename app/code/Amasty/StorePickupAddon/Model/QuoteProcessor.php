@@ -66,7 +66,7 @@ class QuoteProcessor
             $productOptions = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
             if (array_key_exists('options', $productOptions) && $productOptions['options'] > 0) {
                 foreach ($productOptions['options'] as $option) {
-                    if ($option['label'] == Delivery::DELIVERY_OPTION_LABEL) {
+                    if ($option['label'] == Delivery::OPTION_LABEL) {
                         $groups[$option['value']][] = $item;
                         $isDeliverySpecified = true;
                         break;
@@ -123,7 +123,7 @@ class QuoteProcessor
         $productOptions = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
         if (array_key_exists('options', $productOptions) && $productOptions['options'] > 0) {
             foreach ($productOptions['options'] as $option) {
-                if ($option['label'] == Delivery::DELIVERY_OPTION_LABEL) {
+                if ($option['label'] == Delivery::OPTION_LABEL) {
                     return (int)$option['value'];
                 }
             }

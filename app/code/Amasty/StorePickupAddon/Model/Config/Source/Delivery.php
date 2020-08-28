@@ -15,7 +15,9 @@ class Delivery extends AbstractSource
 {
     public const SHIPPING = 0;
 
-    public const DELIVERY_OPTION_LABEL = 'Delivery';
+    public const ATTRIBUTE_KEY = 'delivery';
+
+    public const OPTION_LABEL = 'Delivery';
 
     private const SHIPPING_LABEL = 'Shipping';
 

@@ -84,7 +84,7 @@ class ShippingProvider
     }
 
     /**
-     * Set store pickup shipping method to the separate quote.
+     * Set/remove store pickup shipping information (address, method) to the quote.
      *
      * @param CartInterface $quote
      * @param int $deliveryLocation
@@ -114,7 +114,7 @@ class ShippingProvider
             $shippingInformationExtension = $this->shippingInformationExtensionFactory->create();
             $shippingInformationExtension->setData(self::PICKUP_STORE, $deliveryLocation);
 
-            $this->setShippingAddress($quote, $deliveryLocation);
+            $this->setShippingAddress($quote->getShippingAddress(), $deliveryLocation);
             $shippingInformation
                 ->setShippingAddress($quote->getShippingAddress())
                 ->setBillingAddress($quote->getBillingAddress())
@@ -126,19 +126,26 @@ class ShippingProvider
 
             return $this->quoteRepository->getActive($quote->getId());
         } else {
-            $this->refreshShippingAddress($quote->getShippingAddress());
+            $this->refreshShippingInformation($quote);
             $this->quoteRepository->save($quote);
 
             return $quote;
         }
     }
 
-    private function setShippingAddress(CartInterface $quote, int $deliveryLocation): CartInterface
+    /**
+     * Set shipping address as selected pickup location address.
+     *
+     * @param Address $address
+     * @param int $deliveryLocation
+     * @return Address
+     */
+    private function setShippingAddress(Address $address, int $deliveryLocation): Address
     {
         $location = $this->locationFactory->create();
         $this->locationResource->load($location, $deliveryLocation);
 
-        $quote->getShippingAddress()
+        $address
             ->setFirstname('-')
             ->setLastname('-')
             ->setCountryId($location->getCountry())
@@ -149,12 +156,18 @@ class ShippingProvider
             ->setPostcode($location->getZip())
             ->setTelephone($location->getPhone());
 
-        return $quote;
+        return $address;
     }
 
-    private function refreshShippingAddress(Address $address): CartInterface
+    /**
+     * Remove shipping information from the quote.
+     *
+     * @param CartInterface $quote
+     * @return CartInterface
+     */
+    private function refreshShippingInformation(CartInterface $quote): CartInterface
     {
-        $address
+        $quote->getShippingAddress()
             ->setFirstname(null)
             ->setLastname(null)
             ->setRegion(null)
@@ -163,8 +176,11 @@ class ShippingProvider
             ->setCity(null)
             ->setPostcode(null)
             ->setTelephone(null)
-            ->unsetData('shipping_method');
+            ->setShippingMethod('')
+            ->setShippingDescription('');
 
-        return $address;
+        $quote->getExtensionAttributes()->setShippingAssignments(null);
+
+        return $quote;
     }
 }

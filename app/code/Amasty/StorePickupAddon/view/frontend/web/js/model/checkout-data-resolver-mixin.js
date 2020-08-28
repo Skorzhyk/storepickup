@@ -118,15 +118,26 @@ define(
                         });
                     }
 
-                    if (selectedShippingMethod && selectedShippingMethod['carrier_code'] === 'amstorepickup') {
-                        checkoutData.setShippingAddressFromData(window.checkoutConfig['shippingAddressFromData']);
-                        // var checkoutCache = JSON.parse(window.localStorage.getItem('mage-cache-storage'));
-                        // checkoutCache['checkout-data']['shippingAddressFromData'] = window.checkoutConfig['shippingAddressFromData'];
-                        // window.localStorage.setItem('mage-cache-storage', JSON.stringify(checkoutCache));
+                    var shippingAddressData = window.checkoutConfig['shippingAddressFromData'];
+
+                    if (availableRate && availableRate['carrier_code'] === 'amstorepickup') {
+                        checkoutData.setShippingAddressFromData(shippingAddressData);
+                        target.resolveShippingAddress();
+                    }
+
+                    var onlyCountry = Object.keys(shippingAddressData).length === 1 && shippingAddressData['country_id'];
+                    var emptyZip = Object.keys(shippingAddressData).length === 2 && shippingAddressData['postcode'] === '-';
+                    var isShippingDataRefreshed = onlyCountry || emptyZip;
+                    if (isShippingDataRefreshed) {
+                        checkoutData.setShippingAddressFromData(shippingAddressData);
+                        target.resolveShippingAddress();
+
+                        checkoutData.setBillingAddressFromData(null);
+                        target.resolveBillingAddress();
                     }
 
                     if (availableRate) {
-                        if (!(!storePickupService.onlyPickup() && availableRate['carrier_code'] === 'amstorepickup')) {
+                        if (!(availableRate['carrier_code'] === 'amstorepickup' && !storePickupService.onlyPickup())) {
                             selectShippingMethodAction(availableRate);
                         }
                     } else {
