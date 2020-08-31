@@ -38,6 +38,17 @@ define(
                 });
 
                 return pickupStore;
+            },
+
+            setShippingAddressDataAsConfig: function () {
+                var shippingAddressData = window.checkoutConfig['shippingAddressFromData'];
+
+                var input;
+                for (var field in shippingAddressData) {
+                    input = $('#checkout-step-shipping input[name=' + field + ']');
+                    input.val(shippingAddressData[field]);
+                    input.trigger('change');
+                }
             }
         }
     }

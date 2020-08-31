@@ -118,28 +118,20 @@ define(
                         });
                     }
 
-                    var shippingAddressData = window.checkoutConfig['shippingAddressFromData'];
-
                     if (availableRate && availableRate['carrier_code'] === 'amstorepickup') {
-                        checkoutData.setShippingAddressFromData(shippingAddressData);
-                        target.resolveShippingAddress();
+                        // storePickupService.setShippingAddressDataAsConfig();
                     }
 
-                    var onlyCountry = Object.keys(shippingAddressData).length === 1 && shippingAddressData['country_id'];
-                    var emptyZip = Object.keys(shippingAddressData).length === 2 && shippingAddressData['postcode'] === '-';
-                    var isShippingDataRefreshed = onlyCountry || emptyZip;
-                    if (isShippingDataRefreshed) {
-                        checkoutData.setShippingAddressFromData(shippingAddressData);
-                        target.resolveShippingAddress();
+                    var isPickupDataCleared = availableRate
+                        && availableRate['carrier_code'] === 'amstorepickup'
+                        && !storePickupService.onlyPickup();
 
-                        checkoutData.setBillingAddressFromData(null);
-                        target.resolveBillingAddress();
+                    if (isPickupDataCleared) {
+
                     }
 
                     if (availableRate) {
-                        if (!(availableRate['carrier_code'] === 'amstorepickup' && !storePickupService.onlyPickup())) {
-                            selectShippingMethodAction(availableRate);
-                        }
+                        selectShippingMethodAction(availableRate);
                     } else {
                         selectShippingMethodAction(null);
                     }
