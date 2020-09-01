@@ -17,8 +17,10 @@
                 type="Amasty\StorePickupAddon\Plugin\Shipping\Model\Shipping\ProvideItems"/>
     </type>
     <type name="Magento\Checkout\Model\DefaultConfigProvider">
+        <plugin name="Amasty_Checkout::DefaultConfigProvider" sortOrder="100"/>
         <plugin name="provide-additional-quote-data-to-checkout"
-                type="Amasty\StorePickupAddon\Plugin\Checkout\Model\DefaultConfigProvider" />
+                type="Amasty\StorePickupAddon\Plugin\Checkout\Model\DefaultConfigProvider"
+                sortOrder="200"/>
     </type>
 <!--    <type name="Magento\Quote\Model\Quote">-->
 <!--        <plugin name="set-delivery-option-to-product"-->

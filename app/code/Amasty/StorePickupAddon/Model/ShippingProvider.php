@@ -50,12 +50,16 @@ class ShippingProvider
     /** @var CartRepositoryInterface */
     private $quoteRepository;
 
+    /** @var LocationFactory */
     private $locationFactory;
 
+    /** @var LocationResource */
     private $locationResource;
 
+    /** @var AddressFactory */
     private $addressFactory;
 
+    /** @var StoreManagerInterface */
     private $storeManager;
 
     public function __construct(

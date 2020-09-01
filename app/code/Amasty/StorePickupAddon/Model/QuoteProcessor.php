@@ -86,8 +86,6 @@ class QuoteProcessor
             ->setCustomerData($quote)
             ->setQuoteItems($quoteItems, $quote);
 
-        $this->quoteRepository->save($quote);
-
         $quote = $this->setShippingInformation($quote);
 
         $this
@@ -116,10 +114,9 @@ class QuoteProcessor
 
 //        return Delivery::SHIPPING;
 
+        // Update in phase 3 (use custom options).
         $product = $item->getProduct();
-        $deliveryAttribute = $product->getCustomAttribute(Delivery::ATTRIBUTE_KEY);
 
-        // Переделать!
         $product->load($product->getId());
         $delivery = $product->getDelivery() !== null ? (int)$product->getDelivery() : Delivery::SHIPPING;
 //        $delivery = Delivery::SHIPPING;
@@ -161,6 +158,7 @@ class QuoteProcessor
     private function setAddresses(CartInterface $quote): QuoteProcessor
     {
         $shippingAddressData = $this->originalQuote->getShippingAddress()->getData();
+        $shippingAddressData['collect_shipping_rates'] = true;
         unset($shippingAddressData['id']);
         unset($shippingAddressData['quote_id']);
 
@@ -227,6 +225,8 @@ class QuoteProcessor
      */
     private function setShippingInformation(CartInterface $quote): CartInterface
     {
+        $this->quoteRepository->save($quote);
+
         $delivery = $this->getQuoteDelivery($quote);
         if ($delivery != Delivery::SHIPPING) {
             $quote = $this->shippingProvider->collectPickupInformation($quote, $delivery);

@@ -28,7 +28,7 @@ define(
 
                 // return onlyPickup;
 
-                return window.checkoutConfig.quoteData['onlyPickup'];
+                return window.checkoutConfig.quoteData['only_pickup'];
             },
 
             getFirstSelectedStore: function () {
@@ -49,6 +49,7 @@ define(
             },
 
             setShippingAddressDataAsConfig: function () {
+                // Переделать средствами Мадженты!
                 var shippingAddressData = window.checkoutConfig['shippingAddressFromData'];
 
                 $('#shipping-new-address-form input').each(function (key, input) {
@@ -65,12 +66,10 @@ define(
             },
 
             isPickupDataCleared: function () {
-                if (window.checkoutConfig['isPickupDataCleared']) {
-                    window.checkoutConfig['isPickupDataCleared'] = false;
-                    return true;
-                }
+                var isDataCleared = window.checkoutConfig.quoteData['is_pickup_data_cleared'];
+                window.checkoutConfig.quoteData['is_pickup_data_cleared'] = false;
 
-                return false;
+                return isDataCleared;
             }
         }
     }

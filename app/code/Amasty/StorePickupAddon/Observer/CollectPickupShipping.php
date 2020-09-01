@@ -75,6 +75,7 @@ class CollectPickupShipping implements ObserverInterface
             // Remove in phase 3 (use custom options).
             $quote->setOnlyPickup($onlyPickup);
             if ($onlyPickup && isset($delivery)) {
+                // Remove in phase 3 (use custom options).
                 $quote->setDelivery($delivery);
             }
 

@@ -38,12 +38,15 @@ class DefaultConfigProvider
         $quote = $this->checkoutSession->getQuote();
 
         // Remove in phase 3 (use custom options).
-        $config['quoteData']['onlyPickup'] = (int)$quote->getOnlyPickup();
+        $config['quoteData']['only_pickup'] = (int)$quote->getOnlyPickup();
         if ($quote->getIsPickupDataCleared() !== null) {
-            $config['quoteData']['isPickupDataCleared'] = (int)$quote->getIsPickupDataCleared();
+            $config['quoteData']['is_pickup_data_cleared'] = (int)$quote->getIsPickupDataCleared();
         }
+        // Remove in phase 3 (use custom options).
         if ($quote->getDelivery() !== null) {
             $config['quoteData']['delivery'] = (int)$quote->getDelivery();
         }
+
+        return $config;
     }
 }
