@@ -61,22 +61,7 @@ class QuoteProcessor
 
         $groups = [];
         foreach ($this->originalQuote->getAllVisibleItems() as $item) {
-            $isDeliverySpecified = false;
-
-            $productOptions = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
-            if (array_key_exists('options', $productOptions) && $productOptions['options'] > 0) {
-                foreach ($productOptions['options'] as $option) {
-                    if ($option['label'] == Delivery::OPTION_LABEL) {
-                        $groups[$option['value']][] = $item;
-                        $isDeliverySpecified = true;
-                        break;
-                    }
-                }
-            }
-
-            if ($isDeliverySpecified === false) {
-                $groups[Delivery::SHIPPING][] = $item;
-            }
+            $groups[$this->getItemDelivery($item)][] = $item;
         }
 
         return $groups;
@@ -120,16 +105,31 @@ class QuoteProcessor
      */
     public function getItemDelivery(Item $item): int
     {
-        $productOptions = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
-        if (array_key_exists('options', $productOptions) && $productOptions['options'] > 0) {
-            foreach ($productOptions['options'] as $option) {
-                if ($option['label'] == Delivery::OPTION_LABEL) {
-                    return (int)$option['value'];
-                }
-            }
-        }
+//        $productOptions = $item->getProduct()->getTypeInstance()->getOrderOptions($item->getProduct());
+//        if (array_key_exists('options', $productOptions) && $productOptions['options'] > 0) {
+//            foreach ($productOptions['options'] as $option) {
+//                if ($option['label'] == Delivery::OPTION_LABEL) {
+//                    return (int)$option['value'];
+//                }
+//            }
+//        }
 
-        return Delivery::SHIPPING;
+//        return Delivery::SHIPPING;
+
+        $product = $item->getProduct();
+        $deliveryAttribute = $product->getCustomAttribute(Delivery::ATTRIBUTE_KEY);
+
+        // Переделать!
+        $product->load($product->getId());
+        $delivery = $product->getDelivery() !== null ? (int)$product->getDelivery() : Delivery::SHIPPING;
+//        $delivery = Delivery::SHIPPING;
+//        if ($deliveryAttribute !== null) {
+//            $deliveryAttributeValue = $deliveryAttribute->getValue();
+//            $deliveryOptions = explode(',', $deliveryAttributeValue);
+//            $delivery = count($deliveryOptions) > 0 ? $deliveryOptions[0] : Delivery::SHIPPING;
+//        }
+
+        return $delivery;
     }
 
     /**
