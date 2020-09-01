@@ -22,6 +22,10 @@
                 type="Amasty\StorePickupAddon\Plugin\Checkout\Model\DefaultConfigProvider"
                 sortOrder="200"/>
     </type>
+    <type name="Amasty\StorePickupWithLocator\Model\Carrier\Shipping">
+        <plugin name="check-pickup-method-availability"
+                type="Amasty\StorePickupAddon\Plugin\Carrier\Shipping"/>
+    </type>
 <!--    <type name="Magento\Quote\Model\Quote">-->
 <!--        <plugin name="set-delivery-option-to-product"-->
 <!--                type="Amasty\StorePickupAddon\Plugin\Quote\Model\Quote\SetDeliveryOption"/>-->

@@ -63,18 +63,12 @@ class CollectPickupShipping implements ObserverInterface
     {
         try {
             $quote = $this->checkoutSession->getQuote();
-
-            $onlyPickup = true;
-            foreach ($quote->getAllVisibleItems() as $item) {
-                $delivery = $this->quoteProcessor->getItemDelivery($item);
-                if ($delivery == Delivery::SHIPPING) {
-                    $onlyPickup = false;
-                }
-            }
+            $onlyPickup = $this->quoteProcessor->onlyPickup($quote);
+            $delivery = $this->quoteProcessor->getQuoteDelivery($quote);
 
             // Remove in phase 3 (use custom options).
             $quote->setOnlyPickup($onlyPickup);
-            if ($onlyPickup && isset($delivery)) {
+            if ($onlyPickup && $delivery != Delivery::SHIPPING) {
                 // Remove in phase 3 (use custom options).
                 $quote->setDelivery($delivery);
             }
