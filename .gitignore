@@ -72,3 +72,4 @@ atlassian*
 /deploy
 /.github
 /app/etc/config.php
+/pub/media/amasty/bundle
