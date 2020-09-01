@@ -15,7 +15,6 @@ use Amasty\StorePickupAddon\Model\QuoteProcessor;
 use Amasty\StorePickupAddon\Model\ShippingProvider;
 use Amasty\StorePickupAddon\Model\Config\Source\Delivery;
 use Amasty\StorePickupWithLocator\Model\Carrier\Shipping;
-use Magento\Quote\Model\Quote\Address;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Psr\Log\LoggerInterface;
 
@@ -30,6 +29,7 @@ class CollectPickupShipping implements ObserverInterface
     /** @var ShippingProvider */
     private $shippingProvider;
 
+    /** @var CartRepositoryInterface */
     private $quoteRepository;
 
     /** @var LoggerInterface */
@@ -39,6 +39,7 @@ class CollectPickupShipping implements ObserverInterface
      * @param CheckoutSession $checkoutSession
      * @param QuoteProcessor $quoteProcessor
      * @param ShippingProvider $shippingProvider
+     * @param CartRepositoryInterface $quoteRepository
      * @param LoggerInterface $logger
      */
     public function __construct(
@@ -71,8 +72,9 @@ class CollectPickupShipping implements ObserverInterface
                 }
             }
 
+            // Remove in phase 3 (use custom options).
             $quote->setOnlyPickup($onlyPickup);
-            if (isset($delivery)) {
+            if ($onlyPickup && isset($delivery)) {
                 $quote->setDelivery($delivery);
             }
 

@@ -144,13 +144,6 @@ class DefaultConfigProvider
             }
         }
 
-        // Вынести в модуль + переделать!
-        $config['quoteData']['onlyPickup'] = (int)$quote->getOnlyPickup();
-        if ($quote->getIsPickupDataCleared() !== null) {
-            $config['quoteData']['isPickupDataCleared'] = (int)$quote->getIsPickupDataCleared();
-        }
-        $config['quoteData']['delivery'] = (int)$quote->getDelivery();
-
         return $config;
     }
 
