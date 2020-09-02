@@ -19,6 +19,7 @@ class AddDeliveryAttributeToProduct implements DataPatchInterface
     /** @var ModuleDataSetupInterface */
     private $moduleDataSetup;
 
+    /** @var EavSetupFactory */
     private $eavSetupFactory;
 
     /**

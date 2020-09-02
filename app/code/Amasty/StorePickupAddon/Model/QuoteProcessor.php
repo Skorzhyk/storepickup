@@ -98,19 +98,23 @@ class QuoteProcessor
     /**
      * Check if quote has only pickup delivery.
      *
-     * @param CartInterface $quote
+     * @param CartInterface|null $quote
      * @return bool
      */
-    public function onlyPickup(CartInterface $quote): bool
+    public function onlyPickup(?CartInterface $quote): bool
     {
-        $onlyPickup = true;
-        foreach ($quote->getAllVisibleItems() as $item) {
-            if ($this->getItemDelivery($item) == Delivery::SHIPPING) {
-                $onlyPickup = false;
+        if ($quote != null) {
+            $onlyPickup = true;
+            foreach ($quote->getAllVisibleItems() as $item) {
+                if ($this->getItemDelivery($item) == Delivery::SHIPPING) {
+                    $onlyPickup = false;
+                }
             }
+
+            return $onlyPickup;
         }
 
-        return $onlyPickup;
+        return false;
     }
 
     /**

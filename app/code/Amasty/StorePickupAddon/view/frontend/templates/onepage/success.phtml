@@ -1,0 +1,56 @@
+<?php
+/**
+ * @author Amasty Team
+ * @copyright Copyright (c) 2020 Amasty (https://www.amasty.com)
+ * @package Amasty_Checkout
+ */
+?>
+<?php /** @var $block \Magento\Checkout\Block\Onepage\Success */ ?>
+<?php
+    /** @var \Amasty\StorePickupAddon\ViewModel\Success $viewModel */
+    $viewModel = $block->getViewModel();
+?>
+<div class="checkout-success">
+    <?php if ($block->getOrderId()): ?>
+        <div class="success-messages">
+            <p><?= $block->escapeHtml(__('We\'ll email you an order confirmation with details and tracking info.')) ?></p>
+        </div>
+    <?php endif;?>
+    <?php if ($block->getOrderId()): ?>
+        <?php foreach ($viewModel->getOrderIds() as $orderId): ?>
+<!--            --><?php //$viewModel->setCurrentOrder((int)$orderId); ?>
+            <div class="success-messages">
+                <?php if ($block->getCanViewOrder()): ?>
+                    <p><?= $block->escapeHtml(__('Your order number is:')) ?>
+                        <a href="<?= /* @noEscape */$block->getViewOrderUrl() ?>"
+                           class="order-number">
+                            <strong>
+                                <?= /* @noEscape */$orderId ?>
+                            </strong>
+                        </a>
+                    </p>
+                <?php else: ?>
+                    <p>
+                        <?= $block->escapeHtml(__('Your order # is:')) ?>
+                        <span>
+                        <?= /* @noEscape */$orderId ?>
+                    </span>
+                    </p>
+                <?php endif;?>
+            </div>
+
+            <?= $block->getChildHtml('details', false) ?>
+        <?php endforeach; ?>
+    <?php endif; ?>
+
+    <?= $block->getAdditionalInfoHtml() ?>
+    <?= $block->getChildHtml('cms') ?>
+
+    <div class="actions-toolbar">
+        <div class="primary">
+            <a class="action primary continue" href="<?= /* @noEscape */$block->getUrl() ?>">
+                <span><?= $block->escapeHtml(__('Continue Shopping')) ?></span>
+            </a>
+        </div>
+    </div>
+</div>

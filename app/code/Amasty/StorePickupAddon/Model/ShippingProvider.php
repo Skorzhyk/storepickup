@@ -152,6 +152,7 @@ class ShippingProvider
         $address
             ->setFirstname('-')
             ->setLastname('-')
+            ->setCompany('')
             ->setCountryId($location->getCountry())
             ->setRegion($location->getStateName())
             ->setRegionId($location->getState())
