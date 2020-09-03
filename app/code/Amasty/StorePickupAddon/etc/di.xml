@@ -22,4 +22,6 @@
                 type="Amasty\StorePickupAddon\Plugin\Checkout\Model\DefaultConfigProvider"
                 sortOrder="200"/>
     </type>
+    <preference for="Magento\Quote\Model\ResourceModel\Quote"
+                type="Amasty\StorePickupAddon\Model\Quote\ResourceModel\Quote"/>
 </config>

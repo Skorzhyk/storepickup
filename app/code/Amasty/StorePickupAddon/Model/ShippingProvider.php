@@ -30,8 +30,6 @@ class ShippingProvider
 {
     private const PICKUP_STORE = 'am_pickup_store';
 
-    private const COUNTRY_CODE_PATH = 'general/country/default';
-
     /** @var ShippingInformationManagementInterface */
     private $shippingInformationManagement;
 
@@ -73,7 +71,6 @@ class ShippingProvider
         LocationResource $locationResource,
         AddressFactory $addressFactory,
         StoreManagerInterface $storeManager
-
     ) {
         $this->shippingInformationManagement = $shippingInformationManagement;
         $this->shippingInformationFactory = $shippingInformationFactory;
