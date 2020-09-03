@@ -19,6 +19,8 @@ class Delivery extends AbstractSource
 
     public const OPTION_LABEL = 'Delivery';
 
+    public const ORDER_PREFIX = 'order_prefix';
+
     private const SHIPPING_LABEL = 'Shipping';
 
     /** @var LocationCollection */

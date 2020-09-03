@@ -17,7 +17,7 @@
         </div>
     <?php endif;?>
     <?php if ($block->getOrderId()): ?>
-        <?php foreach ($viewModel->getOrderIds() as $orderId): ?>
+        <?php foreach ($viewModel->getOrderIds() as $orderId => $incrementId): ?>
             <?php $viewModel->setCurrentOrder((int)$orderId); ?>
             <div class="success-messages">
                 <?php if ($block->getCanViewOrder()): ?>
@@ -25,7 +25,7 @@
                         <a href="<?= /* @noEscape */$block->getViewOrderUrl() ?>"
                            class="order-number">
                             <strong>
-                                <?= /* @noEscape */$orderId ?>
+                                <?= /* @noEscape */$incrementId ?>
                             </strong>
                         </a>
                     </p>
@@ -33,7 +33,7 @@
                     <p>
                         <?= $block->escapeHtml(__('Your order # is:')) ?>
                         <span>
-                        <?= /* @noEscape */$orderId ?>
+                        <?= /* @noEscape */$incrementId ?>
                     </span>
                     </p>
                 <?php endif;?>

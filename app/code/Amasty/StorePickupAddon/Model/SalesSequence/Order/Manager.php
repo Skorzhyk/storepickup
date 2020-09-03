@@ -13,7 +13,6 @@ use Magento\SalesSequence\Model\ResourceModel\Meta as ResourceSequenceMeta;
 use Magento\Framework\DB\Sequence\SequenceInterface;
 use Magento\Quote\Api\Data\CartInterface;
 use Amasty\Storelocator\Model\LocationFactory;
-use Amasty\Storelocator\Model\ResourceModel\Location as LocationResource;
 use Amasty\StorePickupAddon\Model\QuoteProcessor;
 use Amasty\StorePickupAddon\Model\Config\Source\Delivery;
 use Amasty\Storelocator\Model\ResourceModel\Location\Collection as LocationCollection;
@@ -75,11 +74,19 @@ class Manager
         if ($delivery != Delivery::SHIPPING) {
             $locations = $this->locationCollection->getLocationData();
             foreach ($locations as $location) {
-                if ($location->getId() == $delivery) {
-                    $x = 11;
-//                    if ($location->getOrderPrefix() !== null) {
-//                        $meta->setPrefix($location->getOrderPrefix());
-//                    }
+                if ((int)$location['id'] == $delivery) {
+                    if (
+                        array_key_exists('attributes', $location)
+                        && array_key_exists(Delivery::ORDER_PREFIX, $location['attributes'])
+                    ) {
+                        $prefix = $location['attributes'][Delivery::ORDER_PREFIX]['value'];
+                        if ($prefix !== null) {
+
+                        }
+                        $meta->getActiveProfile()->setPrefix($prefix . '-');
+                    }
+
+                    break;
                 }
             }
         }
