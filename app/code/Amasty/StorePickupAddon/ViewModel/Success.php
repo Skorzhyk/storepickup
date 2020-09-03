@@ -27,6 +27,11 @@ class Success implements ArgumentInterface
 
     private $orderIds = null;
 
+    /**
+     * @param CheckoutSession $checkoutSession
+     * @param OrderRepositoryInterface $orderRepository
+     * @param Registry $registry
+     */
     public function __construct(
         CheckoutSession $checkoutSession,
         OrderRepositoryInterface $orderRepository,

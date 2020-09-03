@@ -18,7 +18,7 @@
     <?php endif;?>
     <?php if ($block->getOrderId()): ?>
         <?php foreach ($viewModel->getOrderIds() as $orderId): ?>
-<!--            --><?php //$viewModel->setCurrentOrder((int)$orderId); ?>
+            <?php $viewModel->setCurrentOrder((int)$orderId); ?>
             <div class="success-messages">
                 <?php if ($block->getCanViewOrder()): ?>
                     <p><?= $block->escapeHtml(__('Your order number is:')) ?>

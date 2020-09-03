@@ -16,6 +16,7 @@ use Magento\Quote\Api\CartRepositoryInterface;
 use Amasty\StorePickupAddon\Model\Config\Source\Delivery;
 use Magento\Quote\Model\Quote\Item;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Sales\Model\Order\Address;
 
 /**
  * Class is responsible for splitting quote based on items' store pickup value.
@@ -89,6 +90,7 @@ class QuoteProcessor
         $quote = $this->setShippingInformation($quote);
 
         $this
+            ->setBillingInformation($quote)
             ->collectTotals($quote, $quoteItems)
             ->setPaymentMethod($quote, $paymentMethod);
 
@@ -270,6 +272,19 @@ class QuoteProcessor
         }
 
         return $quote;
+    }
+
+    private function setBillingInformation(CartInterface $quote): QuoteProcessor
+    {
+        if ($this->getQuoteDelivery($quote) != Delivery::SHIPPING) {
+            $shippingAddress = $quote->getShippingAddress();
+            $billingAddress = clone $shippingAddress;
+            $billingAddress->setId(null);
+            $billingAddress->setAddressType(Address::TYPE_BILLING);
+            $quote->setBillingAddress($billingAddress);
+        }
+
+        return $this;
     }
 
     /**

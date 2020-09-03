@@ -9,14 +9,40 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column"
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
-        <referenceBlock name="amasty.checkout.success">
-            <action method="setTemplate">
-                <argument name="template" xsi:type="string">Amasty_StorePickupAddon::onepage/success.phtml</argument>
-            </action>
-            <arguments>
-                <argument name="view_model"
-                          xsi:type="object">Amasty\StorePickupAddon\ViewModel\Success</argument>
-            </arguments>
-        </referenceBlock>
+        <referenceContainer name="content">
+            <block ifconfig="amasty_checkout/general/enabled" class="Magento\Framework\View\Element\Messages" name="messages" as="messages" template="Magento_Theme::messages.phtml"/>
+            <block class="Magento\Checkout\Block\Onepage\Success" name="amasty.checkout.success" template="Amasty_StorePickupAddon::onepage/success.phtml" cacheable="false">
+                <arguments>
+                    <argument name="view_model"
+                              xsi:type="object">Amasty\StorePickupAddon\ViewModel\Success</argument>
+                </arguments>
+                <block class="Amasty\Checkout\Block\Onepage\Success\Details" name="amasty.checkout.success.details" as="details" template="Amasty_StorePickupAddon::onepage/details.phtml" cacheable="false">
+                    <block class="Amasty\Checkout\Block\Sales\Order\Info\Delivery" name="delivery" as="delivery" template="Amasty_Checkout::onepage/details/delivery.phtml"/>
+                    <block class="Magento\Sales\Block\Order\Info" as="info" name="sales.order.info" template="order/info.phtml"/>
+                    <block class="Magento\Sales\Block\Order\View" name="order.comments" template="Amasty_Checkout::onepage/details/comments.phtml" as="comments"/>
+                    <block class="Magento\Sales\Block\Order\View" name="sales.order.view" cacheable="false" as="order_view" template="Amasty_StorePickupAddon::onepage/details/order/view.phtml">
+                        <block class="Amasty\StorePickupAddon\Block\Sales\Order\Items" name="order_items" template="Amasty_StorePickupAddon::order/items.phtml">
+                            <block class="Magento\Framework\View\Element\RendererList" name="sales.order.items.renderers" as="renderer.list"/>
+                            <block class="Amasty\StorePickupAddon\Block\Sales\Order\Totals" name="order_totals" template="Magento_Sales::order/totals.phtml">
+                                <arguments>
+                                    <argument name="label_properties" xsi:type="string">colspan="4" class="mark"</argument>
+                                    <argument name="value_properties" xsi:type="string">class="amount"</argument>
+                                </arguments>
+                                <block class="Magento\Tax\Block\Sales\Order\Tax" name="tax" template="order/tax.phtml"/>
+                                <block class="Amasty\Checkout\Block\Sales\Order\Fee" name="amasty_checkout_fee"/>
+                            </block>
+                        </block>
+                    </block>
+                </block>
+                <container name="order.success.additional.info" label="Order Success Additional Info"/>
+                <block class="Amasty\Checkout\Block\Onepage\Success\Cms" name="amasty.checkout.success.cms" as="cms" after="-" >
+                    <arguments>
+                        <argument name="data" xsi:type="array">
+                            <item name="cache_lifetime" xsi:type="number">86400</item>
+                        </argument>
+                    </arguments>
+                </block>
+            </block>
+        </referenceContainer>
     </body>
 </page>
