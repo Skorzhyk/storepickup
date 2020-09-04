@@ -14,6 +14,9 @@ config = {
             },
             'Magento_Checkout/js/view/shipping': {
                 'Amasty_StorePickupAddon/js/view/shipping-mixin': true
+            },
+            'Magento_Checkout/js/view/summary/cart-items': {
+                'Amasty_StorePickupAddon/js/view/summary/cart-items-mixin': true
             }
         }
     }

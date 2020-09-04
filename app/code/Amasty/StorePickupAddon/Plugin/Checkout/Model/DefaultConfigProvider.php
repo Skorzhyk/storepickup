@@ -13,16 +13,23 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 
+use Amasty\StorePickupAddon\Model\QuoteProcessor;
+
 /**
  * Class is responsible for providing additional information to checkout.
  */
 class DefaultConfigProvider
 {
+    /** @var CheckoutSession */
     private $checkoutSession;
 
-    public function __construct(CheckoutSession $checkoutSession)
+    /** @var QuoteProcessor */
+    private $quoteProcessor;
+
+    public function __construct(CheckoutSession $checkoutSession, QuoteProcessor $quoteProcessor)
     {
         $this->checkoutSession = $checkoutSession;
+        $this->quoteProcessor = $quoteProcessor;
     }
 
     /**
@@ -30,6 +37,7 @@ class DefaultConfigProvider
      *
      * @param CoreProvider $subject
      * @param $config
+     * @return mixed
      * @throws LocalizedException
      * @throws NoSuchEntityException
      */
@@ -46,6 +54,15 @@ class DefaultConfigProvider
         if ($quote->getDelivery() !== null) {
             $config['quoteData']['delivery'] = (int)$quote->getDelivery();
         }
+
+        // Remove in phase 3 (use custom options).
+        $itemsConfig = $config['totalsData']['items'];
+        $items = $quote->getItemsCollection()->getItems();
+        foreach ($itemsConfig as $key => $itemConfig) {
+            $item = $items[$itemConfig['item_id']];
+            $itemsConfig[$key]['delivery'] = $this->quoteProcessor->getItemDelivery($item);
+        }
+        $config['totalsData']['items'] = $itemsConfig;
 
         return $config;
     }
