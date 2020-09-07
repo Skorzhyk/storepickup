@@ -9,6 +9,8 @@ define(
     ) {
         'use strict';
 
+
+
         return {
             onlyPickup: function () {
                 // Переделать под опции!

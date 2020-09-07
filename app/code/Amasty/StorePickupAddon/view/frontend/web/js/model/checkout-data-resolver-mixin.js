@@ -11,6 +11,7 @@ define(
         'Magento_Checkout/js/action/select-shipping-address',
         'Amasty_Checkout/js/model/payment/vault-payment-resolver',
         'Amasty_StorePickupAddon/js/model/store-pickup-service',
+        'Magento_Checkout/js/action/select-billing-address',
         'uiRegistry',
         'underscore',
         'mage/utils/wrapper'
@@ -27,6 +28,7 @@ define(
         selectShippingAddress,
         vaultResolver,
         storePickupService,
+        selectBillingAddress,
         registry,
         _,
         wrapper
@@ -83,13 +85,8 @@ define(
                         availableRate = false;
 
                     if (storePickupService.onlyPickup()) {
-                        registry
-                            .get('checkoutProvider')
-                            .set('amstorepickup', {am_pickup_store: storePickupService.getFirstSelectedStore()});
-
-                        availableRate = _.find(ratesData, function (rate) {
-                            return rate['carrier_code'] === selectedShippingMethod['carrier_code'] &&
-                                rate['method_code'] === selectedShippingMethod['method_code'];
+                        window.checkoutConfig.quoteData['pickup_shipping_method'] = _.find(ratesData, function (rate) {
+                            return rate['carrier_code'] === 'amstorepickup';
                         });
                     }
 
@@ -118,15 +115,17 @@ define(
                         });
                     }
 
-                    if (availableRate && availableRate['carrier_code'] === 'amstorepickup'
-                        || storePickupService.isPickupDataCleared()) {
-                        storePickupService.setShippingAddressDataAsConfig();
-                    }
+                    // if (availableRate && availableRate['carrier_code'] === 'amstorepickup'
+                    //     || storePickupService.isPickupDataCleared()) {
+                    //     storePickupService.setShippingAddressDataAsConfig();
+                    // }
 
-                    if (availableRate) {
-                        selectShippingMethodAction(availableRate);
-                    } else {
-                        selectShippingMethodAction(null);
+                    if (!window.checkoutConfig.quoteData['pickup_shipping_method']) {
+                        if (availableRate && availableRate['carrier_code'] !== 'amstorepickup') {
+                            selectShippingMethodAction(availableRate);
+                        } else {
+                            selectShippingMethodAction(null);
+                        }
                     }
                 },
 
@@ -193,6 +192,41 @@ define(
 
                     if (addressList().length > 1) {
                         selectShippingAddress(addressData);
+                    }
+                },
+
+                applyBillingAddress: function () {
+                    var shippingAddress,
+                        isBillingAddressInitialized;
+
+                    if (quote.billingAddress()) {
+                        selectBillingAddress(quote.billingAddress());
+
+                        return;
+                    }
+
+                    if (quote.isVirtual() || !quote.billingAddress()) {
+                        isBillingAddressInitialized = addressList.some(function (addrs) {
+                            if (addrs.isDefaultBilling()) {
+                                selectBillingAddress(addrs);
+
+                                return true;
+                            }
+
+                            return false;
+                        });
+                    }
+
+                    shippingAddress = quote.shippingAddress();
+
+                    if (!storePickupService.onlyPickup()) {
+                        if (!isBillingAddressInitialized &&
+                            shippingAddress &&
+                            shippingAddress.canUseForBilling() &&
+                            (shippingAddress.isDefaultShipping() || !quote.isVirtual())
+                        ) {
+                            selectBillingAddress(quote.shippingAddress());
+                        }
                     }
                 }
             };
