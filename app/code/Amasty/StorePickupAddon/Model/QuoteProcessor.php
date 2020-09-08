@@ -23,6 +23,8 @@ use Magento\Sales\Model\Order\Address;
  */
 class QuoteProcessor
 {
+    public const PARENT_QUOTE_ID = 'parent_quote_id';
+
     /** @var CheckoutSession */
     private $checkoutSession;
 
@@ -93,6 +95,8 @@ class QuoteProcessor
             ->setBillingInformation($quote)
             ->collectTotals($quote, $quoteItems)
             ->setPaymentMethod($quote, $paymentMethod);
+
+        $quote->setParentQuoteId($this->originalQuote->getId());
 
         return $quote;
     }

@@ -15,7 +15,13 @@ use Magento\Quote\Api\Data\CartInterface;
 use Amasty\Storelocator\Model\LocationFactory;
 use Amasty\StorePickupAddon\Model\QuoteProcessor;
 use Amasty\StorePickupAddon\Model\Config\Source\Delivery;
-use Amasty\Storelocator\Model\ResourceModel\Location\Collection as LocationCollection;
+use Amasty\Storelocator\Model\ResourceModel\Location\CollectionFactory as LocationCollectionFactory;
+use Magento\Quote\Model\ResourceModel\Quote\CollectionFactory as QuoteCollectionFactory;
+use Magento\Sales\Model\ResourceModel\Order\CollectionFactory as OrderCollectionFactory;
+use Magento\Sales\Model\ResourceModel\Order\Collection as OrderCollection;
+use Magento\SalesSequence\Model\Sequence;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Exception\LocalizedException;
 
 /**
@@ -23,6 +29,8 @@ use Magento\Framework\Exception\LocalizedException;
  */
 class Manager
 {
+    private const SHIPPING_ORDER_PREFIX = 'SHP';
+
     /** @var ResourceSequenceMeta */
     private $resourceSequenceMeta;
 
@@ -32,47 +40,118 @@ class Manager
     /** @var QuoteProcessor */
     private $quoteProcessor;
 
-    /** @var LocationCollection */
-    private $locationCollection;
+    /** @var LocationCollectionFactory */
+    private $locationCollectionFactory;
+
+    /** @var QuoteCollectionFactory */
+    private $quoteCollectionFactory;
+
+    /** @var OrderCollectionFactory */
+    private $orderCollectionFactory;
+
+    /** @var AdapterInterface */
+    private $resourceConnection;
 
     private $quote = null;
+
+    private $childrenQuoteCollection = null;
+
+    private $meta;
 
     /**
      * @param ResourceSequenceMeta $resourceSequenceMeta
      * @param SequenceFactory $sequenceFactory
      * @param QuoteProcessor $quoteProcessor
-     * @param LocationCollection $locationCollection
+     * @param LocationCollectionFactory $locationCollectionFactory
+     * @param QuoteCollectionFactory $quoteCollectionFactory
+     * @param OrderCollectionFactory $orderCollectionFactory
+     * @param ResourceConnection $resourceConnection
      */
     public function __construct(
         ResourceSequenceMeta $resourceSequenceMeta,
         SequenceFactory $sequenceFactory,
         QuoteProcessor $quoteProcessor,
-        LocationCollection $locationCollection
+        LocationCollectionFactory $locationCollectionFactory,
+        QuoteCollectionFactory $quoteCollectionFactory,
+        OrderCollectionFactory $orderCollectionFactory,
+        ResourceConnection $resourceConnection
     ) {
         $this->resourceSequenceMeta = $resourceSequenceMeta;
         $this->sequenceFactory = $sequenceFactory;
         $this->quoteProcessor = $quoteProcessor;
-        $this->locationCollection = $locationCollection;
+        $this->locationCollectionFactory = $locationCollectionFactory;
+        $this->quoteCollectionFactory = $quoteCollectionFactory;
+        $this->orderCollectionFactory = $orderCollectionFactory;
+        $this->resourceConnection = $resourceConnection->getConnection();
     }
 
     /**
-     * Returns sequence for given entityType and store.
+     * Get increment ID for next order (with considering split orders).
      *
+     * @return string
+     */
+    public function getNextValue(): string
+    {
+        $orderGroup = $this->getOrderGroup();
+
+        if ($orderGroup !== null) {
+            $orderGroupSize = $orderGroup->getSize();
+
+            $this->meta->getActiveProfile()->setSuffix('-' . ($orderGroupSize + 1));
+
+            if ($orderGroupSize > 0) {
+                $lastIncrementIdQuery = 'SELECT MAX(sequence_value) FROM ' . $this->meta->getSequenceTable();
+                $groupIncrementId = (int)$this->resourceConnection->fetchOne($lastIncrementIdQuery);
+
+                return sprintf(
+                    Sequence::DEFAULT_PATTERN,
+                    $this->meta->getActiveProfile()->getPrefix(),
+                    $groupIncrementId,
+                    $this->meta->getActiveProfile()->getSuffix()
+                );
+            }
+        }
+
+        return $this->getSequence()->getNextValue();
+    }
+
+    /**
+     * Set current quote.
+     *
+     * @param CartInterface $quote
+     * @return Manager
+     */
+    public function setQuote(CartInterface $quote): Manager
+    {
+        $this->quote = $quote;
+
+        $parentQuoteId = $this->quote->getParentQuoteId();
+        if ($parentQuoteId !== null) {
+            $childrenQuoteCollection = $this->quoteCollectionFactory->create();
+            $childrenQuoteCollection->addFieldToFilter(QuoteProcessor::PARENT_QUOTE_ID, ['eq' => $parentQuoteId]);
+
+            $this->childrenQuoteCollection = $childrenQuoteCollection;
+        }
+
+        return $this;
+    }
+
+    /**
      * @param $entityType
      * @param $storeId
-     * @return SequenceInterface
+     * @return Manager
      * @throws LocalizedException
      */
-    public function getSequence($entityType, $storeId)
+    public function setMeta($entityType, $storeId): Manager
     {
-        $meta = $this->resourceSequenceMeta->loadByEntityTypeAndStore(
+        $this->meta = $this->resourceSequenceMeta->loadByEntityTypeAndStore(
             $entityType,
             $storeId
         );
 
         $delivery = $this->quoteProcessor->getQuoteDelivery($this->quote);
         if ($delivery != Delivery::SHIPPING) {
-            $locations = $this->locationCollection->getLocationData();
+            $locations = $this->locationCollectionFactory->create()->getLocationData();
             foreach ($locations as $location) {
                 if ((int)$location['id'] == $delivery) {
                     if (
@@ -80,28 +159,45 @@ class Manager
                         && array_key_exists(Delivery::ORDER_PREFIX, $location['attributes'])
                     ) {
                         $prefix = $location['attributes'][Delivery::ORDER_PREFIX]['value'];
-                        if ($prefix !== null) {
-
+                        if ($prefix !== null && $prefix != '') {
+                            $this->meta->getActiveProfile()->setPrefix($prefix . '-');
                         }
-                        $meta->getActiveProfile()->setPrefix($prefix . '-');
                     }
 
                     break;
                 }
             }
+        } else {
+            $this->meta->getActiveProfile()->setPrefix(self::SHIPPING_ORDER_PREFIX . '-');
         }
 
-        return $this->sequenceFactory->create(['meta' => $meta]);
+        return $this;
     }
 
     /**
-     * Set current quote.
+     * Returns sequence for given entityType and store.
      *
-     * @param CartInterface $quote
-     * @return void
+     * @return SequenceInterface
      */
-    public function setQuote(CartInterface $quote): void
+    private function getSequence()
     {
-        $this->quote = $quote;
+        return $this->sequenceFactory->create(['meta' => $this->meta]);
+    }
+
+    /**
+     * Returns first order ID from current order group.
+     *
+     * @return OrderCollection|null
+     */
+    private function getOrderGroup(): ?OrderCollection
+    {
+        if ($this->childrenQuoteCollection !== null) {
+            $orderCollection = $this->orderCollectionFactory->create();
+            $orderCollection->addFieldToFilter('quote_id', ['in' => $this->childrenQuoteCollection->getAllIds()]);
+
+            return $orderCollection;
+        }
+
+        return null;
     }
 }

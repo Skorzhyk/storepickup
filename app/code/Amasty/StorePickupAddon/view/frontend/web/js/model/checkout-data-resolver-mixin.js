@@ -115,11 +115,6 @@ define(
                         });
                     }
 
-                    // if (availableRate && availableRate['carrier_code'] === 'amstorepickup'
-                    //     || storePickupService.isPickupDataCleared()) {
-                    //     storePickupService.setShippingAddressDataAsConfig();
-                    // }
-
                     if (!window.checkoutConfig.quoteData['pickup_shipping_method']) {
                         if (availableRate && availableRate['carrier_code'] !== 'amstorepickup') {
                             selectShippingMethodAction(availableRate);

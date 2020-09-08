@@ -16,6 +16,8 @@ use Magento\Framework\Registry;
 
 class Success implements ArgumentInterface
 {
+    private const SINGLE_ORDER_ID = 0;
+
     /** @var CheckoutSession */
     private $checkoutSession;
 
@@ -69,12 +71,16 @@ class Success implements ArgumentInterface
      */
     public function setCurrentOrder(int $orderId): OrderInterface
     {
-        $order = $this->orderRepository->get($orderId);
+        if ($orderId != self::SINGLE_ORDER_ID) {
+            $order = $this->orderRepository->get($orderId);
 
-        $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
-        $this->registry->unregister('current_order');
-        $this->registry->register('current_order', $order);
+            $this->checkoutSession->setLastRealOrderId($order->getIncrementId());
+            $this->registry->unregister('current_order');
+            $this->registry->register('current_order', $order);
 
-        return $order;
+            return $order;
+        }
+
+        return $this->checkoutSession->getLastRealOrder();
     }
 }

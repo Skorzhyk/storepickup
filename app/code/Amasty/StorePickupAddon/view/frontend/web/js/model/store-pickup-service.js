@@ -1,17 +1,36 @@
 define(
     [
         'jquery',
-        'Magento_Checkout/js/model/quote'
+        'Magento_Checkout/js/model/quote',
+        'Magento_Checkout/js/action/select-shipping-method',
+        'uiRegistry'
     ],
     function (
         $,
-        quote
+        quote,
+        selectShippingMethodAction,
+        registry
     ) {
         'use strict';
 
-
-
         return {
+            processInitial: function () {
+                if (this.onlyPickup()) {
+                    var pickupShippingMethod = window.checkoutConfig.quoteData['pickup_shipping_method'];
+                    if (pickupShippingMethod) {
+                        registry
+                            .get('checkoutProvider')
+                            .set('amstorepickup', {am_pickup_store: this.getFirstSelectedStore()});
+
+                        selectShippingMethodAction(pickupShippingMethod);
+                    }
+                }
+
+                if (this.isPickupDataCleared()) {
+                    this.setShippingAddressDataAsConfig();
+                }
+            },
+
             onlyPickup: function () {
                 // Переделать под опции!
 
@@ -50,18 +69,18 @@ define(
                 return window.checkoutConfig.quoteData['delivery'];
             },
 
+            // Переделать средствами Мадженты!
             setShippingAddressDataAsConfig: function () {
-                // Переделать средствами Мадженты!
                 var shippingAddressData = window.checkoutConfig['shippingAddressFromData'];
 
-                $('#shipping-new-address-form input').each(function (key, input) {
+                $('#shipping-new-address-form input,select').each(function (key, input) {
                     $(input).val('');
                     $(input).change();
                 });
 
                 var input;
                 for (var field in shippingAddressData) {
-                    input = $('#shipping-new-address-form input[name=' + field + ']');
+                    input = $('#shipping-new-address-form input[name=' + field + '],select[name=' + field + ']');
                     input.val(shippingAddressData[field]);
                     input.trigger('change');
                 }

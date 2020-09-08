@@ -1,0 +1,7 @@
+{
+    "quote": {
+        "column": {
+            "parent_quote_id": true
+        }
+    }
+}
