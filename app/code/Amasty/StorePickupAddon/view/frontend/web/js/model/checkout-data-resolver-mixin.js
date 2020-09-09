@@ -116,7 +116,7 @@ define(
                     }
 
                     if (!storePickupService.onlyPickup()) {
-                        if (availableRate) {
+                        if (availableRate && availableRate['carrier_code'] !== 'amstorepickup') {
                             selectShippingMethodAction(availableRate);
                         } else {
                             selectShippingMethodAction(null);
