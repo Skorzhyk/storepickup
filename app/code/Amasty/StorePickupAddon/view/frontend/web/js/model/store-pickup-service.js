@@ -2,35 +2,22 @@ define(
     [
         'jquery',
         'Magento_Checkout/js/model/quote',
-        'Magento_Checkout/js/action/select-shipping-method',
+        'Magento_Checkout/js/model/address-converter',
+        'Magento_Checkout/js/action/select-shipping-address',
+        'Amasty_Checkout/js/model/shipping-registry',
         'uiRegistry'
     ],
     function (
         $,
         quote,
-        selectShippingMethodAction,
+        addressConverter,
+        selectShippingAddress,
+        shippingRegistry,
         registry
     ) {
         'use strict';
 
         return {
-            processInitial: function () {
-                if (this.onlyPickup()) {
-                    var pickupShippingMethod = window.checkoutConfig.quoteData['pickup_shipping_method'];
-                    if (pickupShippingMethod) {
-                        registry
-                            .get('checkoutProvider')
-                            .set('amstorepickup', {am_pickup_store: this.getFirstSelectedStore()});
-
-                        selectShippingMethodAction(pickupShippingMethod);
-                    }
-                }
-
-                if (this.isPickupDataCleared()) {
-                    this.setShippingAddressDataAsConfig();
-                }
-            },
-
             onlyPickup: function () {
                 // Переделать под опции!
 
@@ -69,28 +56,27 @@ define(
                 return window.checkoutConfig.quoteData['delivery'];
             },
 
-            // Переделать средствами Мадженты!
-            setShippingAddressDataAsConfig: function () {
-                var shippingAddressData = window.checkoutConfig['shippingAddressFromData'];
+            refreshShippingAddress: function () {
+                var address = quote.shippingAddress();
+                address.city = null;
+                address.countryId = null;
+                address.firstname = null;
+                address.lastname = null;
+                address.middlename = null;
+                address.postcode = null;
+                address.region = null;
+                address.regionCode = null;
+                address.regionId = null;
+                address.street = [];
+                address.telephone = [];
 
-                $('#shipping-new-address-form input,select').each(function (key, input) {
-                    $(input).val('');
-                    $(input).change();
-                });
+                var addressData = addressConverter.quoteAddressToFormAddressData(address);
 
-                var input;
-                for (var field in shippingAddressData) {
-                    input = $('#shipping-new-address-form input[name=' + field + '],select[name=' + field + ']');
-                    input.val(shippingAddressData[field]);
-                    input.trigger('change');
-                }
-            },
-
-            isPickupDataCleared: function () {
-                var isDataCleared = window.checkoutConfig.quoteData['is_pickup_data_cleared'];
-                window.checkoutConfig.quoteData['is_pickup_data_cleared'] = false;
-
-                return isDataCleared;
+                registry.get('checkoutProvider').set(
+                    'shippingAddress',
+                    addressData
+                );
+                selectShippingAddress(address);
             }
         }
     }

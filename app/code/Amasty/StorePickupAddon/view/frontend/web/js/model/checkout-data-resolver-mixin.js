@@ -115,8 +115,8 @@ define(
                         });
                     }
 
-                    if (!window.checkoutConfig.quoteData['pickup_shipping_method']) {
-                        if (availableRate && availableRate['carrier_code'] !== 'amstorepickup') {
+                    if (!storePickupService.onlyPickup()) {
+                        if (availableRate) {
                             selectShippingMethodAction(availableRate);
                         } else {
                             selectShippingMethodAction(null);

@@ -58,6 +58,8 @@ class Success implements ArgumentInterface
             } else {
                 $this->orderIds = $orderIds = [$this->checkoutSession->getLastRealOrderId()];
             }
+
+            $this->checkoutSession->setOrderIds(null);
         }
 
         return $this->orderIds;

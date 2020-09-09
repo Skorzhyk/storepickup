@@ -92,7 +92,6 @@ class QuoteProcessor
         $quote = $this->setShippingInformation($quote);
 
         $this
-            ->setBillingInformation($quote)
             ->collectTotals($quote, $quoteItems)
             ->setPaymentMethod($quote, $paymentMethod);
 
@@ -276,19 +275,6 @@ class QuoteProcessor
         }
 
         return $quote;
-    }
-
-    private function setBillingInformation(CartInterface $quote): QuoteProcessor
-    {
-        if ($this->getQuoteDelivery($quote) != Delivery::SHIPPING) {
-            $shippingAddress = $quote->getShippingAddress();
-            $billingAddress = clone $shippingAddress;
-            $billingAddress->setId(null);
-            $billingAddress->setAddressType(Address::TYPE_BILLING);
-            $quote->setBillingAddress($billingAddress);
-        }
-
-        return $this;
     }
 
     /**

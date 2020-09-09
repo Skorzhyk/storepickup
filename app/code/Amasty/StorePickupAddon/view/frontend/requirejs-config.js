@@ -18,9 +18,6 @@ config = {
             'Magento_Checkout/js/view/summary/cart-items': {
                 'Amasty_StorePickupAddon/js/view/summary/cart-items-mixin': true
             },
-            'Magento_Checkout/js/checkout-loader': {
-                'Amasty_StorePickupAddon/js/checkout-loader-mixin': true
-            },
             'Amasty_Checkout/js/view/onepage': {
                 'Amasty_StorePickupAddon/js/view/onepage-mixin': true
             },
