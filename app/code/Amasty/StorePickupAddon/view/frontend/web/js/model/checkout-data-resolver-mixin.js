@@ -73,7 +73,7 @@ define(
                         return;
                     }
 
-                    if (ratesData.length === 1) {
+                    if (ratesData.length === 1 && ratesData[0]['carrier_code'] !== 'amstorepickup') {
                         //set shipping rate if we have only one available shipping rate
                         selectShippingMethodAction(ratesData[0]);
 
